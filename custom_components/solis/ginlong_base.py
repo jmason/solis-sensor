@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from aiohttp import ClientSession
 
 from .ginlong_const import INVERTER_STATE
+from .ginlong_const import INVERTER_TIMESTAMP_UPDATE
 
 _LOGGER = logging.getLogger(__name__)
 
