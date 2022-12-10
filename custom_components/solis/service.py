@@ -194,8 +194,10 @@ class InverterService():
                     # ...but try to figure out a better next-update time based on
                     # the last update
                     try:
-                        last_update = time.gmtime(getattr(data, INVERTER_TIMESTAMP_UPDATE))
-                        nxt = dt_util.utc_from_timestamp(last_update) + update + timedelta(seconds=1)
+                        ts = getattr(data, INVERTER_TIMESTAMP_UPDATE)
+                        _LOGGER.info("timestamp %s", ts)
+                        nxt = dt_util.utc_from_timestamp(ts) + update + timedelta(seconds=1)
+                        _LOGGER.info("nxt %s", str(nxt))
                         if nxt > dt_util.utcnow():
                             update = nxt - dt_util.utcnow()
                     except AttributeError:
@@ -214,10 +216,10 @@ class InverterService():
                 # Time to login again
                 await self._logout()
 
-    def schedule_update(self, td: timedelta):
+    def schedule_update(self, td: timedelta) -> None:
         """ Schedule an update after td time. """
-        _LOGGER.debug("Scheduling next update in %s.", td)
         nxt = dt_util.utcnow() + td
+        _LOGGER.debug("Scheduling next update in %s, at %s", str(td), nxt)
         async_track_point_in_utc_time(self._hass, self.async_update, nxt)
 
     def schedule_discovery(self, callback, cookie: dict[str, Any], seconds: int = 1):

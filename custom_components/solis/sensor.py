@@ -6,7 +6,7 @@ For more information: https://github.com/hultenvp/solis-sensor/
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from typing import Any
 import voluptuous as vol
@@ -148,7 +148,7 @@ def on_discovered(capabilities, cookie):
     hass_sensors = create_sensors(discovered_sensors, cookie['service'], cookie['name'])
     cookie['async_add_entities'](hass_sensors)
     # schedule the first update in 1 minute from now:
-    cookie['service'].schedule_update(1)
+    cookie['service'].schedule_update(timedelta(minutes=1))
 
 class SolisSensor(ServiceSubscriber, SensorEntity):
     """ Representation of a Solis sensor. """
