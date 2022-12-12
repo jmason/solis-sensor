@@ -197,7 +197,6 @@ class InverterService():
                         ts = getattr(data, INVERTER_TIMESTAMP_UPDATE)
                         _LOGGER.info("timestamp %s", ts)
                         nxt = dt_util.utc_from_timestamp(ts) + update + timedelta(seconds=1)
-                        _LOGGER.info("nxt %s", str(nxt))
                         if nxt > dt_util.utcnow():
                             update = nxt - dt_util.utcnow()
                     except AttributeError:
