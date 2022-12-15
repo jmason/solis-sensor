@@ -14,7 +14,6 @@ from homeassistant.const import (
     ENERGY_KILO_WATT_HOUR,
     ENERGY_MEGA_WATT_HOUR,
     POWER_WATT,
-    POWER_KILO_WATT,
     ELECTRIC_CURRENT_AMPERE,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
@@ -306,7 +305,7 @@ SENSOR_TYPES = {
     ],
     'batpower': [
         'Battery Power',
-        POWER_KILO_WATT,
+        POWER_WATT,
         'mdi:battery',
         DEVICE_CLASS_POWER,
         STATE_CLASS_MEASUREMENT,
