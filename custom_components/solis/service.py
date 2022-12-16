@@ -27,7 +27,9 @@ from .ginlong_const import (
 )
 
 # REFRESH CONSTANTS
+# Match up with the default SolisCloud API resolution of 5 minutes
 SCHEDULE_OK = 5
+# Attempt retries every 1 minute if we fail to talk to the API, though
 SCHEDULE_NOK = 1
 
 _LOGGER = logging.getLogger(__name__)
@@ -189,17 +191,16 @@ class InverterService():
                 data = await self._api.fetch_inverter_data(inverter_serial)
                 if data is not None:
                     # And finally get the inverter details
-                    # default to updating after SCHEDULE_OK minutes
+                    # default to updating after SCHEDULE_OK minutes;
                     update = timedelta(minutes=SCHEDULE_OK)
-                    # ...but try to figure out a better next-update time based on
-                    # the last update
+                    # ...but try to figure out a better next-update time based on when the API last received its data
                     try:
                         ts = getattr(data, INVERTER_TIMESTAMP_UPDATE)
                         nxt = dt_util.utc_from_timestamp(ts) + update + timedelta(seconds=1)
                         if nxt > dt_util.utcnow():
                             update = nxt - dt_util.utcnow()
                     except AttributeError:
-                        pass # no last_update found, so keep just using SCHEDULE_OK
+                        pass # no last_update found, so keep just using SCHEDULE_OK as a safe default
                     self._last_updated = datetime.now()
                     await self.update_devices(data)
                 else:
