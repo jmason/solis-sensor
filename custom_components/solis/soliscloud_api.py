@@ -175,18 +175,13 @@ class SoliscloudConfig(PortalConfig):
         portal_username: str,
         portal_key_id: str,
         portal_secret: bytes,
-        portal_plantid: str
+        portal_plantid: str,
+        workarounds: dict[str, Any]
     ) -> None:
         super().__init__(portal_domain, portal_username, portal_plantid)
         self._key_id: str = portal_key_id
         self._secret: bytes = portal_secret
-        self._workarounds = {}
-        try:
-            with open('/config/custom_components/solis/workarounds.yaml', 'r') as file:
-                self._workarounds = yaml.safe_load(file)
-                _LOGGER.debug("workarounds: %s", self._workarounds)
-        except FileNotFoundError:
-            pass
+        self._workarounds: dict[str, Any] = workarounds
 
     @property
     def key_id(self) -> str:
