@@ -45,7 +45,7 @@ MESSAGE = 'Message'
 
 VERB = "POST"
 
-INVERTER_DETAIL = '/v1/api/inverterDetail'
+INVERTER_DETAIL_LIST = '/v1/api/inverterDetailList'
 PLANT_DETAIL = '/v1/api/stationDetail'
 PLANT_LIST = '/v1/api/userStationList'
 
@@ -53,7 +53,7 @@ InverterDataType = dict[str, dict[str, list]]
 
 """{endpoint: [payload type, {key type, decimal precision}]}"""
 INVERTER_DATA: InverterDataType = {
-    INVERTER_DETAIL: {
+    INVERTER_DETAIL_LIST: {
         INVERTER_SERIAL:                  ['sn', str, None],
         INVERTER_PLANT_ID:                ['stationId', str, None],
         INVERTER_DEVICE_ID:               ['id', str, None],
@@ -129,6 +129,8 @@ INVERTER_DATA: InverterDataType = {
         GRID_REACTIVE_PHASE1_POWER:       ['aReactivePower', float, 3],
         GRID_REACTIVE_PHASE2_POWER:       ['bReactivePower', float, 3],
         GRID_REACTIVE_PHASE3_POWER:       ['cReactivePower', float, 3],
+        GRID_TOTAL_CONSUMPTION_POWER:     ['familyLoadPower', float, 3],
+        GRID_TOTAL_CONSUMPTION_POWER_STR: ['familyLoadPowerStr', str, None],
         SOC_CHARGING_SET:                 ['socChargingSet', float, 0],
         SOC_DISCHARGE_SET:                ['socDischargeSet', float, 0],
         BYPASS_LOAD_POWER:                ['bypassLoadPower', float, 3],
@@ -160,8 +162,8 @@ INVERTER_DATA: InverterDataType = {
         GRID_DAILY_ON_GRID_ENERGY_STR:    ['gridSellDayEnergyStr', str, None],
         GRID_DAILY_ENERGY_USED:           ['homeLoadEnergy', float, 3],
         GRID_DAILY_ENERGY_USED_STR:       ['homeLoadEnergyStr', str, None],
-        GRID_TOTAL_CONSUMPTION_POWER:     ['familyLoadPower', float, 3],
-        GRID_TOTAL_CONSUMPTION_POWER_STR: ['familyLoadPowerStr', str, None]
+        PLANT_TOTAL_CONSUMPTION_POWER:     ['familyLoadPower', float, 3],
+        PLANT_TOTAL_CONSUMPTION_POWER_STR: ['familyLoadPowerStr', str, None]
     },
 }
 
@@ -269,7 +271,7 @@ class SoliscloudAPI(BaseAPI):
         if result[SUCCESS] is True:
             result_json: dict = result[CONTENT]
             if result_json['code'] != '0':
-                _LOGGER.info("%s responded with error: %s:%s",INVERTER_DETAIL, \
+                _LOGGER.info("%s responded with error: %s:%s",INVERTER_DETAIL_LIST, \
                     result_json['code'], result_json['msg'])
                 return device_ids
             try:
@@ -325,27 +327,31 @@ class SoliscloudAPI(BaseAPI):
 
         # Get inverter details
         params = {
-            'id': device_id,
-            'sn': device_serial
         }
 
-        result = await self._post_data_json(INVERTER_DETAIL, params)
+        result = await self._post_data_json(INVERTER_DETAIL_LIST, params)
 
         jsondata = None
+        record = None
         if result[SUCCESS] is True:
             jsondata = result[CONTENT]
             if jsondata['code'] != '0':
-                _LOGGER.info("%s responded with error: %s:%s",INVERTER_DETAIL, \
+                _LOGGER.info("%s responded with error: %s:%s",INVERTER_DETAIL_LIST, \
                     jsondata['code'], jsondata['msg'])
                 return None
+            try:
+                for record in jsondata['data']['records']:
+                    if record.get('sn') == device_serial and record.get('id') == device_id:
+                        return record
+            except TypeError:
+                _LOGGER.debug("Response contains unexpected data: %s", jsondata)
         else:
             _LOGGER.info('Unable to fetch details for device with ID: %s', device_id)
-        return jsondata
+        return record
 
     def _collect_inverter_data(self, payload: dict[str, Any]) -> None:
         """ Fetch dynamic properties """
-        jsondata = payload['data']
-        attributes = INVERTER_DATA[INVERTER_DETAIL]
+        attributes = INVERTER_DATA[INVERTER_DETAIL_LIST]
         collect_energy_today = True
         try:
             collect_energy_today = \
@@ -353,7 +359,7 @@ class SoliscloudAPI(BaseAPI):
         except KeyError:
             pass
         if collect_energy_today:
-            _LOGGER.debug("Using inverterDetail for energy_today")
+            _LOGGER.debug("Using inverterDetailList for energy_today")
 
         for dictkey in attributes:
             key = attributes[dictkey][0]
@@ -362,7 +368,7 @@ class SoliscloudAPI(BaseAPI):
             if key is not None:
                 value = None
                 if key != INVERTER_ENERGY_TODAY or collect_energy_today:
-                    value = self._get_value(jsondata, key, type_, precision)
+                    value = self._get_value(payload, key, type_, precision)
                 if value is not None:
                     self._data[dictkey] = value
 
@@ -453,6 +459,7 @@ class SoliscloudAPI(BaseAPI):
             self._fix_units(BAT_TOTAL_ENERGY_CHARGED, BAT_TOTAL_ENERGY_CHARGED_STR)
             self._fix_units(BAT_TOTAL_ENERGY_DISCHARGED, BAT_TOTAL_ENERGY_DISCHARGED_STR)
             self._fix_units(GRID_TOTAL_CONSUMPTION_POWER, GRID_TOTAL_CONSUMPTION_POWER_STR)
+            self._fix_units(PLANT_TOTAL_CONSUMPTION_POWER, PLANT_TOTAL_CONSUMPTION_POWER_STR)
             self._fix_units(GRID_TOTAL_ENERGY_USED, GRID_TOTAL_ENERGY_USED_STR)
             self._fix_units(INVERTER_ACPOWER, INVERTER_ACPOWER_STR)
             self._fix_units(INVERTER_ENERGY_THIS_MONTH, INVERTER_ENERGY_THIS_MONTH_STR)
