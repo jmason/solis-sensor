@@ -21,6 +21,7 @@ from typing import Any
 from aiohttp import ClientError, ClientSession
 import async_timeout
 import yaml
+import aiofiles
 
 from .ginlong_base import BaseAPI, GinlongData, PortalConfig
 from .ginlong_const import *
@@ -29,7 +30,7 @@ from .soliscloud_const import *
 _LOGGER = logging.getLogger(__name__)
 
 # VERSION
-VERSION = '0.5.2'
+VERSION = '0.5.4'
 
 # API NAME
 API_NAME = 'SolisCloud'
@@ -78,14 +79,26 @@ INVERTER_DATA: InverterDataType = {
         STRING2_VOLTAGE:                  ['uPv2', float, 2],
         STRING3_VOLTAGE:                  ['uPv3', float, 2],
         STRING4_VOLTAGE:                  ['uPv4', float, 2],
+        STRING5_VOLTAGE:                  ['uPv5', float, 2],
+        STRING6_VOLTAGE:                  ['uPv6', float, 2],
+        STRING7_VOLTAGE:                  ['uPv7', float, 2],
+        STRING8_VOLTAGE:                  ['uPv8', float, 2],
         STRING1_CURRENT:                  ['iPv1', float, 2],
         STRING2_CURRENT:                  ['iPv2', float, 2],
         STRING3_CURRENT:                  ['iPv3', float, 2],
         STRING4_CURRENT:                  ['iPv4', float, 2],
-        STRING1_POWER:                    ['pow1', float, 2], # Undocumented
-        STRING2_POWER:                    ['pow2', float, 2], # Undocumented
-        STRING3_POWER:                    ['pow3', float, 2], # Undocumented
-        STRING4_POWER:                    ['pow4', float, 2], # Undocumented
+        STRING5_CURRENT:                  ['iPv5', float, 2],
+        STRING6_CURRENT:                  ['iPv6', float, 2],
+        STRING7_CURRENT:                  ['iPv7', float, 2],
+        STRING8_CURRENT:                  ['iPv8', float, 2],
+        STRING1_POWER:                    ['pow1', float, 2],
+        STRING2_POWER:                    ['pow2', float, 2],
+        STRING3_POWER:                    ['pow3', float, 2],
+        STRING4_POWER:                    ['pow4', float, 2],
+        STRING5_POWER:                    ['pow5', float, 2],
+        STRING6_POWER:                    ['pow6', float, 2],
+        STRING7_POWER:                    ['pow7', float, 2],
+        STRING8_POWER:                    ['pow8', float, 2],
         PHASE1_VOLTAGE:                   ['uAc1', float, 2],
         PHASE2_VOLTAGE:                   ['uAc2', float, 2],
         PHASE3_VOLTAGE:                   ['uAc3', float, 2],
@@ -181,7 +194,16 @@ class SoliscloudConfig(PortalConfig):
         super().__init__(portal_domain, portal_username, portal_plantid)
         self._key_id: str = portal_key_id
         self._secret: bytes = portal_secret
-        self._workarounds: dict[str, Any] = workarounds
+        self._workarounds = {}
+
+    async def load_workarounds(self):
+        try:
+            async with aiofiles.open('/config/custom_components/solis/workarounds.yaml', 'r') as file:
+                content = await file.read()
+                self._workarounds = yaml.safe_load(content)
+                _LOGGER.debug("workarounds: %s", self._workarounds)
+        except FileNotFoundError:
+            pass
 
     @property
     def key_id(self) -> str:
@@ -227,6 +249,9 @@ class SoliscloudAPI(BaseAPI):
         """See if we can build a list of inverters"""
         self._session = session
         self._inverter_list = None
+
+        # Load workarounds
+        await self._config.load_workarounds()
 
         # Request inverter list
         self._inverter_list = await self.fetch_inverter_list(self.config.plant_id)
@@ -362,7 +387,7 @@ class SoliscloudAPI(BaseAPI):
             precision = attributes[dictkey][2]
             if key is not None:
                 value = None
-                if key != INVERTER_ENERGY_TODAY or collect_energy_today:
+                if dictkey != INVERTER_ENERGY_TODAY or collect_energy_today:
                     value = self._get_value(payload, key, type_, precision)
                 if value is not None:
                     self._data[dictkey] = value
@@ -407,7 +432,7 @@ class SoliscloudAPI(BaseAPI):
             precision = attributes[dictkey][2]
             if key is not None:
                 value = None
-                if key != INVERTER_ENERGY_TODAY or collect_energy_today:
+                if dictkey != INVERTER_ENERGY_TODAY or collect_energy_today:
                     value = self._get_value(jsondata, key, type_, precision)
                 if value is not None:
                     self._data[dictkey] = value
@@ -431,7 +456,7 @@ class SoliscloudAPI(BaseAPI):
             precision = attributes[dictkey][2]
             if key is not None:
                 value = None
-                if key != INVERTER_ENERGY_TODAY or collect_energy_today:
+                if dictkey != INVERTER_ENERGY_TODAY or collect_energy_today:
                     value = self._get_value(jsondata, key, type_, precision)
                 if value is not None:
                     self._data[dictkey] = value

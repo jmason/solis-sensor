@@ -1,8 +1,5 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-# ❗Request for maintainers
-As you might have noticed I'm having trouble to spend enough time on maintaining this integration. For the continuity of this integration it would be great if it could be maintained and further developed by a small team of volunteers. Are you interested and do you have coding experience? [Drop me a line](https://github.com/hultenvp/solis-sensor/discussions/376).
-
 # SolisCloud sensor integration
 HomeAssistant sensor for SolisCloud portal. 
 Still questions after the readme? Read the [wiki](https://github.com/hultenvp/solis-sensor/wiki) or look at the [discussions page](https://github.com/hultenvp/solis-sensor/discussions)
@@ -23,12 +20,12 @@ You can obtain key and secret via SolisCloud.
 * Once confirmed, you get the API ID, secret and API URL
 
 ## Platform v2 (legacy, not maintained)
-Platform V2 backend wass used by Ginlong before being decomissioned in may 2023. The same backend API is also used for different PV inverter brand portals. The platform v2 integration logs in to the platform and exposes the data retrieved as sensors.
+Platform V2 backend was used by Ginlong before being decomissioned in May 2023. The same backend API is also used for different PV inverter brand portals. The platform v2 integration logs in to the platform and exposes the data retrieved as sensors.
 Keeping as legacy for:
 * Solarman (home.solarman.cn)
 * Sofar solar (home.solarman.cn)
 
-> Platform V2 backend wass used by Ginlong and MyEvolveCloud and the same backend is also used for different PV inverter brand portals. I've only tested it in context of Solis with the Ginlong platform. Since Ginlong now is decomissioned I have no further means to test and will not process change requests.
+> Platform V2 backend was used by Ginlong and MyEvolveCloud and the same backend is also used for different PV inverter brand portals. I've only tested it in context of Solis with the Ginlong platform. Since Ginlong now is decomissioned I have no further means to test and will not process change requests.
 
 ## HACS installation
 
