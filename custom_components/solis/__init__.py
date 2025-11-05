@@ -21,12 +21,12 @@ from .const import (
     CONF_PASSWORD,
     CONF_PLANT_ID,
     CONF_PORTAL_DOMAIN,
-    CONF_PORTAL_VERSION,
+    CONF_REFRESH_NOK,
+    CONF_REFRESH_OK,
     CONF_SECRET,
     CONF_USERNAME,
     DOMAIN,
 )
-from .ginlong_api import GinlongConfig
 from .ginlong_base import PortalConfig
 from .service import InverterService
 from .soliscloud_api import SoliscloudConfig
@@ -82,7 +82,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     portal_domain = config[CONF_PORTAL_DOMAIN]
     portal_plantid = config[CONF_PLANT_ID]
     portal_username = config[CONF_USERNAME]
-    portal_version = config[CONF_PORTAL_VERSION]
     portal_control = False
     portal_password = None
     try:
@@ -93,23 +92,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         pass
 
     portal_config: PortalConfig | None = None
-    if portal_version == "ginlong_v2":
-        portal_password = config[CONF_PASSWORD]
-        portal_config = GinlongConfig(portal_domain, portal_username, portal_password, portal_plantid)
-    else:
-        portal_key_id = config[CONF_KEY_ID]
-        portal_secret: bytes = bytes(config[CONF_SECRET], "utf-8")
-        portal_config = SoliscloudConfig(
-            portal_domain,
-            portal_username,
-            portal_key_id,
-            portal_secret,
-            portal_plantid,
-            portal_password,
-        )
+    portal_key_id = config[CONF_KEY_ID]
+    portal_secret: bytes = bytes(config[CONF_SECRET], "utf-8")
+    portal_config = SoliscloudConfig(
+        portal_domain,
+        portal_username,
+        portal_key_id,
+        portal_secret,
+        portal_plantid,
+        portal_password,
+    )
 
     # Initialize the Ginlong data service.
-    service: InverterService = InverterService(portal_config, hass)
+    refresh_ok = 300
+    refresh_error = 60
+    try:
+        # Fixme: https://github.com/hultenvp/solis-sensor/issues/496
+        refresh_ok = config[CONF_REFRESH_OK]
+        refresh_error = config[CONF_REFRESH_NOK]
+    except KeyError:
+        pass
+    service: InverterService = InverterService(portal_config, hass, refresh_ok, refresh_error)
     hass.data[DOMAIN][entry.entry_id] = service
 
     # Forward the setup to the sensor platform.

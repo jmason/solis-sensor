@@ -18,9 +18,8 @@ from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.util import dt as dt_util
 
 from .control_const import ALL_CONTROLS, CONTROL_TYPES
-from .ginlong_api import GinlongAPI, GinlongConfig
 from .ginlong_base import BaseAPI, GinlongData, PortalConfig
-from .ginlong_const import (
+from .soliscloud_const import (
     INVERTER_ACPOWER,
     INVERTER_ENERGY_TODAY,
     INVERTER_SERIAL,
@@ -28,12 +27,6 @@ from .ginlong_const import (
     INVERTER_TIMESTAMP_UPDATE,
 )
 from .soliscloud_api import SoliscloudAPI, SoliscloudConfig
-
-# REFRESH CONSTANTS
-# Match up with the default SolisCloud API resolution of 5 minutes
-SCHEDULE_OK = 300
-# Attempt retries every 1 minute if we fail to talk to the API, though
-SCHEDULE_NOK = 60
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +76,11 @@ class ServiceSubscriber(ABC):
 class InverterService:
     """Serves all plantId's and inverters on a Ginlong account"""
 
-    def __init__(self, portal_config: PortalConfig, hass: HomeAssistant) -> None:
+    def __init__(
+        self, portal_config: PortalConfig, hass: HomeAssistant, refresh_ok: int = 300, refresh_nok: int = 60
+    ) -> None:
+        self._schedule_ok: int = refresh_ok
+        self._schedule_nok: int = refresh_nok
         self._last_updated: datetime | None = None
         self._logintime: datetime | None = None
         self._subscriptions: dict[str, dict[str, ServiceSubscriber]] = {}
@@ -95,9 +92,7 @@ class InverterService:
         self._controllable: bool = False
         self._controls: dict[str, dict[str, list[tuple]]] = {}
         # self._active_times: dict[str, dict] = {}
-        if isinstance(portal_config, GinlongConfig):
-            self._api: BaseAPI = GinlongAPI(portal_config)
-        elif isinstance(portal_config, SoliscloudConfig):
+        if isinstance(portal_config, SoliscloudConfig):
             self._api = SoliscloudAPI(portal_config)
         else:
             _LOGGER.error("Failed to initialize service, incompatible config")
@@ -280,7 +275,7 @@ class InverterService:
 
     async def async_update(self, *_) -> None:
         """Update the data from Ginlong portal."""
-        update = timedelta(seconds=SCHEDULE_NOK)
+        update = timedelta(seconds=self._schedule_nok)
         # Login using username and password, but only every HRS_BETWEEN_LOGIN hours
         if await self._login():
             inverters = self._api.inverters
@@ -292,7 +287,7 @@ class InverterService:
                 if data is not None:
                     # And finally get the inverter details
                     # default to updating after SCHEDULE_OK seconds;
-                    update = timedelta(seconds=SCHEDULE_OK)
+                    update = timedelta(seconds=self._schedule_ok)
                     # ...but try to figure out a better next-update time based on when the API last received its data
                     try:
                         ts = getattr(data, INVERTER_TIMESTAMP_UPDATE)
@@ -304,7 +299,7 @@ class InverterService:
                     self._last_updated = datetime.now()
                     await self.update_devices(data)
                 else:
-                    update = timedelta(seconds=SCHEDULE_NOK)
+                    update = timedelta(seconds=self._schedule_nok)
                     # Reset session and try to login again next time
                     await self._logout()
 

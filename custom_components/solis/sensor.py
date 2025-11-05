@@ -42,9 +42,6 @@ from .service import InverterService, ServiceSubscriber
 
 _LOGGER = logging.getLogger(__name__)
 
-# VERSION
-VERSION = "3.12.0"
-
 # ATTRIBUTES
 LAST_UPDATED = "Last updated"
 SERIAL = "Inverter serial"
@@ -163,6 +160,9 @@ def on_discovered(capabilities, cookie):
 class SolisSensor(ServiceSubscriber, SensorEntity):
     """Representation of a Solis sensor."""
 
+    _attr_entity_registry_enabled_default = True
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         ginlong_service: InverterService,
@@ -224,10 +224,10 @@ class SolisSensor(ServiceSubscriber, SensorEntity):
             identifiers={
                 (
                     DOMAIN,
-                    f"{self._attributes[SERIAL]}_{DOMAIN, self._attributes[API_NAME]}",
+                    f"{self._attributes[SERIAL]}_{self._attributes[API_NAME]}",
                 )
             },
-            manufacturer=f"Solis {self._attributes[API_NAME]}",
+            manufacturer=f"Solis",
             name=f"Solis_Inverter_{self._attributes[SERIAL]}",
             #            model=config.modelid,
             #            sw_version=config.swversion,

@@ -1,4 +1,7 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+
+>❗As from release 4.0.0 the legacy Ginlong v2 API support has been removed. If you still use the integration for some MyEvolvecloud legacy endpoint using the v2 API then stick to the v3.x versions or fork
+
 # SolisCloud sensor integration
 
 HomeAssistant sensor for SolisCloud portal. 
@@ -12,20 +15,12 @@ Still questions after the readme? Read the [wiki](https://github.com/hultenvp/so
 The new portal requires a key-id, secret and username to function.
 You can obtain key and secret via SolisCloud.
 * Submit a [service ticket](https://solis-service.solisinverters.com/support/solutions/articles/44002212561-api-access-soliscloud) and wait till it is resolved.
-* Go to https://www.soliscloud.com/#/apiManage.
+* Go to https://www.soliscloud.com/apiManage .
 * Activate API management and agree with the usage conditions.
-* After activation, click on view key tot get a pop-up window asking for the verification code.
+* After activation, click on view key to get a pop-up window asking for the verification code.
 * First click on "Verification code" after which you get an image with 2 puzzle pieces, which you need to overlap each other using the slider below.
 * After that, you will receive an email with the verification code you need to enter (within 60 seconds).
-* Once confirmed, you get the API ID, secret and API URL
-
-## Platform v2 (legacy, not maintained)
-Platform V2 backend was used by Ginlong before being decomissioned in May 2023. The same backend API is also used for different PV inverter brand portals. The platform v2 integration logs in to the platform and exposes the data retrieved as sensors.
-Keeping as legacy for:
-* Solarman (home.solarman.cn)
-* Sofar solar (home.solarman.cn)
-
-> Platform V2 backend was used by Ginlong and MyEvolveCloud and the same backend is also used for different PV inverter brand portals. I've only tested it in context of Solis with the Ginlong platform. Since Ginlong now is decomissioned I have no further means to test and will not process change requests.
+* Once confirmed, you get the API key ID, key secret and API URL.
 
 ## HACS installation
 
@@ -34,30 +29,36 @@ The use of HACS is supported and is the preferred means of installing this integ
 ## Manual installation
 
 Create a directory called `solis` in the `<config directory>/custom_components/` directory on your Home Assistant instance.
-Install this component by copying the files in [`/custom_components/solis/`]
+Install this component by copying the files and directories in [`/custom_components/solis/`]
 
 This is how your custom_components directory should be:
 ```bash
 custom_components
 ├── solis
 │   ├── __init__.py
+│   ├── button.py
 │   ├── config_flow.py
 │   ├── const.py
-│   ├── ginlong_api.py
+│   ├── control_const.py
+│   ├── control_utils.py
 │   ├── ginlong_base.py
-│   ├── ginlong_const.py
 │   ├── manifest.json
+│   ├── number.py
+│   ├── select.py
 │   ├── sensor.py
 │   ├── service.py
 │   ├── soliscloud_api.py
 │   ├── soliscloud_const.py
 │   ├── strings.json
+│   ├── time.py
+│   ├── translations
+│   │   └── en.json
 │   └── workarounds.yaml
 ```
 Now restart your Home Assistant Instance before continuing to the next step
 
 ### :warning:  Troubleshooting
-SolisCloud is in production since 2021, but still suffers from instability. This can manifest itself as issues during setup, but also as regression/instabilities after service maintenance.
+SolisCloud API is in production since 2021, but still suffers from instability. This can manifest itself as issues during setup, but also as regression/instabilities after service maintenance.
 Below are issues that were encountered in the past and some suggestions how to resolve/troubleshoot.
 
 #### No inverters found
@@ -98,13 +99,10 @@ The integration can be configured via the UI.
   2. In the Plant Overview tab, under the Plant Name column, Click on your actual plant name, per the screenshot below:
   <img width="301" alt="image" src="https://github.com/hultenvp/solis-sensor/blob/master/image/soliscloud_mainpage.png">
   
-  3. Copy the 19-digit number from the URL: https://www.soliscloud.com/#/station/stationdetail_1?id=XXXXXXXXXXXXXXXXXXX and paste it in the station ID field:
+  3. Copy the 19-digit number from the URL: https://www.soliscloud.com/station/stationDetails/generalSituation/XXXXXXXXXXXXXXXXXXX and paste it in the station ID field:
   <img width="301" alt="image" src="https://github.com/hultenvp/solis-sensor/blob/master/image/soliscloud_stationdetail.png">
 
-If the plant id in the overview page (https://soliscloud.com/#/station/stationdetail_1?id=xxxxxxxxxxx) is empty then you will get "no inverter found errors. Change the name of the installation by choosing "change information" on the top right of the overview page. After that a plantid is generated.
-
-**Ginlong platform v2 (deprecated, left in for legacy support)**   
-* Provide username, password and plant id. If you want to add multiple plants just repeat "add integration" for each plant.
+If the plant id in the overview page (https://www.soliscloud.com/station/stationDetails/generalSituation/XXXXXXXXXXXXXXXXXXX) is empty then you will get "no inverter found" errors. Change the name of the installation by choosing "change information" on the top right of the overview page. After that a plantid is generated.
 
 # Energy dashboard
 The Solis integration now supports the energy dashboard introduced in Release 2021.8. 
@@ -113,7 +111,7 @@ The Solis integration now supports the energy dashboard introduced in Release 20
 ![dashboard integration](./image/energy_dashboard_integration.GIF)
 ![energy production](./image/solar_production_energy_dashboard.GIF)
 
-# Control Beta Test
+# Inverter Control Beta Test
 
 This includes a beta version of device control using the same API as the SolisCloud app, for use with inverters with an attached battery. This operates slighty differently depending on your HMI firmware version. This should be detected automatically.
 

@@ -26,13 +26,12 @@ import yaml
 from aiohttp import ClientError, ClientSession
 
 from .ginlong_base import BaseAPI, GinlongData, PortalConfig
-from .ginlong_const import *
 from .soliscloud_const import *
 
 _LOGGER = logging.getLogger(__name__)
 
 # VERSION
-VERSION = "0.6.0"
+VERSION = "0.6.2"
 
 # API NAME
 API_NAME = "SolisCloud"
@@ -93,6 +92,22 @@ INVERTER_DATA: InverterDataType = {
         STRING6_VOLTAGE: ["uPv6", float, 2],
         STRING7_VOLTAGE: ["uPv7", float, 2],
         STRING8_VOLTAGE: ["uPv8", float, 2],
+        STRING9_VOLTAGE: ["uPv9", float, 2],
+        STRING10_VOLTAGE: ["uPv10", float, 2],
+        STRING11_VOLTAGE: ["uPv11", float, 2],
+        STRING12_VOLTAGE: ["uPv12", float, 2],
+        STRING13_VOLTAGE: ["uPv13", float, 2],
+        STRING14_VOLTAGE: ["uPv14", float, 2],
+        STRING15_VOLTAGE: ["uPv15", float, 2],
+        STRING16_VOLTAGE: ["uPv16", float, 2],
+        STRING17_VOLTAGE: ["uPv17", float, 2],
+        STRING18_VOLTAGE: ["uPv18", float, 2],
+        STRING19_VOLTAGE: ["uPv19", float, 2],
+        STRING20_VOLTAGE: ["uPv20", float, 2],
+        STRING21_VOLTAGE: ["uPv21", float, 2],
+        STRING22_VOLTAGE: ["uPv22", float, 2],
+        STRING23_VOLTAGE: ["uPv23", float, 2],
+        STRING24_VOLTAGE: ["uPv24", float, 2],
         STRING1_CURRENT: ["iPv1", float, 2],
         STRING2_CURRENT: ["iPv2", float, 2],
         STRING3_CURRENT: ["iPv3", float, 2],
@@ -101,6 +116,22 @@ INVERTER_DATA: InverterDataType = {
         STRING6_CURRENT: ["iPv6", float, 2],
         STRING7_CURRENT: ["iPv7", float, 2],
         STRING8_CURRENT: ["iPv8", float, 2],
+        STRING9_CURRENT: ["iPv9", float, 2],
+        STRING10_CURRENT: ["iPv10", float, 2],
+        STRING11_CURRENT: ["iPv11", float, 2],
+        STRING12_CURRENT: ["iPv12", float, 2],
+        STRING13_CURRENT: ["iPv13", float, 2],
+        STRING14_CURRENT: ["iPv14", float, 2],
+        STRING15_CURRENT: ["iPv15", float, 2],
+        STRING16_CURRENT: ["iPv16", float, 2],
+        STRING17_CURRENT: ["iPv17", float, 2],
+        STRING18_CURRENT: ["iPv18", float, 2],
+        STRING19_CURRENT: ["iPv19", float, 2],
+        STRING20_CURRENT: ["iPv20", float, 2],
+        STRING21_CURRENT: ["iPv21", float, 2],
+        STRING22_CURRENT: ["iPv22", float, 2],
+        STRING23_CURRENT: ["iPv23", float, 2],
+        STRING24_CURRENT: ["iPv24", float, 2],
         STRING1_POWER: ["pow1", float, 2],
         STRING2_POWER: ["pow2", float, 2],
         STRING3_POWER: ["pow3", float, 2],
@@ -109,6 +140,22 @@ INVERTER_DATA: InverterDataType = {
         STRING6_POWER: ["pow6", float, 2],
         STRING7_POWER: ["pow7", float, 2],
         STRING8_POWER: ["pow8", float, 2],
+        STRING9_POWER: ["pow9", float, 2],
+        STRING10_POWER: ["pow10", float, 2],
+        STRING11_POWER: ["pow11", float, 2],
+        STRING12_POWER: ["pow12", float, 2],
+        STRING13_POWER: ["pow13", float, 2],
+        STRING14_POWER: ["pow14", float, 2],
+        STRING15_POWER: ["pow15", float, 2],
+        STRING16_POWER: ["pow16", float, 2],
+        STRING17_POWER: ["pow17", float, 2],
+        STRING18_POWER: ["pow18", float, 2],
+        STRING19_POWER: ["pow19", float, 2],
+        STRING20_POWER: ["pow20", float, 2],
+        STRING21_POWER: ["pow21", float, 2],
+        STRING22_POWER: ["pow22", float, 2],
+        STRING23_POWER: ["pow23", float, 2],
+        STRING24_POWER: ["pow24", float, 2],
         PHASE1_VOLTAGE: ["uAc1", float, 2],
         PHASE2_VOLTAGE: ["uAc2", float, 2],
         PHASE3_VOLTAGE: ["uAc3", float, 2],
@@ -391,14 +438,14 @@ class SoliscloudAPI(BaseAPI):
                     self._collect_inverter_data(payload)
                     if inverter_serial not in self._hmi_fb00:
                         hmi_flag = self._data[HMI_VERSION_ALL]
-                        self._hmi_fb00[inverter_serial] = int(hmi_flag, 16) >= int("4200", 16)
+                        self._hmi_fb00[inverter_serial] = int(hmi_flag, 16) >= int("4b00", 16)
                         if self._hmi_fb00[inverter_serial]:
                             _LOGGER.debug(
-                                f"HMI firmware version ({hmi_flag}) >=4200 for Inverter SN {inverter_serial} "
+                                f"HMI firmware version ({hmi_flag}) >=4B00 for Inverter SN {inverter_serial} "
                             )
                         else:
                             _LOGGER.debug(
-                                f"HMI firmware version ({hmi_flag}) <4200 for Inverter SN {inverter_serial} "
+                                f"HMI firmware version ({hmi_flag}) <4B00 for Inverter SN {inverter_serial} "
                             )
 
                 if (self._token != "") and controls:
@@ -792,8 +839,7 @@ class SoliscloudAPI(BaseAPI):
         return ""
 
     async def write_control_data(self, device_serial: str, cid: str, value: str):
-        _LOGGER.debug(f">>> Writing value {value} for cid {cid} to inverter {device_serial}")
-
+        _LOGGER.debug(f"Writing value {value} for cid {cid} to inverter {device_serial}")
         params = {"inverterSn": str(device_serial), "cid": str(cid), "value": value}
         result = await self._post_data_json(CONTROL, params, csrf=True)
 
